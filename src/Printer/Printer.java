@@ -1,32 +1,52 @@
 package Printer;
 
-public class Printer {
-    public static void main(String[] args) {
-        final int N_PRINTERS = 4;
-        final int N_NUMBERS = 100;
-        final int N_PORTIONS = 10;
+public class Printer extends Thread {
+	private static final long SLEEPING_TIME = 100;
+	int printerId;
+	Printer nextPrinter;
+	private int portionLength;
+	static int msgSize;
+	static int nPortions;
 
-        PrinterThread[] printers = new PrinterThread[N_PRINTERS];
+	public Printer(int printerId) {
+		this.printerId = printerId;
+		portionLength = msgSize / nPortions;
+	}
 
-        for (int i = 0; i < N_PRINTERS; i++) {
-            printers[i] = new PrinterThread(i + 1, N_NUMBERS, N_PORTIONS);
-        }
+	public void setNextPrinter(Printer nextPrinter) {
+		this.nextPrinter = nextPrinter;
+	}
 
-        for (int i = 0; i < N_PRINTERS; i++) {
-            printers[i].setNextPrinter(printers[(i + 1) % N_PRINTERS]);
-        }
+	public static void setMsgSize(int msgSize) {
+		Printer.msgSize = msgSize;
+	}
 
-        // Start all threads (they go to waiting state)
-        for (PrinterThread printer : printers) {
-            printer.start();
-            try {
-                Thread.sleep(1); // Give each thread time to enter the waiting state
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+	public static void setPortions(int nPortions) {
+		Printer.nPortions = nPortions;
+	}
 
-        // Start the chain by interrupting the first thread
-        printers[0].interrupt();
-    }
+	@Override
+	public void run() {
+		int portionNumber = 0;
+		while (portionNumber < nPortions) {
+			try {
+				sleep(SLEEPING_TIME);
+			} catch (InterruptedException e) {
+				for(int j=0; j<portionLength; j++) {
+					System.out.print("" + printerId);
+					try {
+//						sleep(1000);
+					} catch(Exception ex) {
+						
+					}
+				}
+				System.out.println("");
+//				System.out.println(("" + printerId).repeat(portionLength));
+				nextPrinter.interrupt();
+				portionNumber++;
+			}
+		}
+	}
+	
+
 }
