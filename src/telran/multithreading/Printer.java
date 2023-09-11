@@ -2,45 +2,51 @@ package telran.multithreading;
 
 public class Printer extends Thread {
 	private static final long SLEEPING_TIME = 100;
-	int printerNumber;
-	Printer next;
-	private int inLine;
-	static int overall;
-	static int nPartitions;
+	int printerId;
+	Printer nextPrinter;
+	private int portionLength;
+	static int msgSize;
+	static int nPortions;
 
-	public Printer(int printerNumber) {
-		this.printerNumber = printerNumber;
-		inLine = overall / nPartitions;
+	public Printer(int printerId) {
+		this.printerId = printerId;
+		portionLength = msgSize / nPortions;
 	}
 
-	public void setNext(Printer next) {
-		this.next = next;
+	public void setNextPrinter(Printer nextPrinter) {
+		this.nextPrinter = nextPrinter;
 	}
 
-	public static void setOverall(int overall) {
-		Printer.overall = overall;
+	public static void setMsgSize(int msgSize) {
+		Printer.msgSize = msgSize;
 	}
 
-	public static void setPartitions(int nPartitions) {
-		Printer.nPartitions = nPartitions;
-
+	public static void setPortions(int nPortions) {
+		Printer.nPortions = nPortions;
 	}
 
 	@Override
 	public void run() {
-		int count = 0;
-		String line = (" " + printerNumber).repeat(inLine);
-		while (count < nPartitions) {
+		int portionNumber = 0;
+		while (portionNumber < nPortions) {
 			try {
-				join();
-
+				sleep(SLEEPING_TIME);
 			} catch (InterruptedException e) {
-				System.out.println(line);
-				next.interrupt();
-				count++;
+				for(int j=0; j<portionLength; j++) {
+					System.out.print("" + printerId);
+					try {
+//						sleep(1000);
+					} catch(Exception ex) {
+						
+					}
+				}
+				System.out.println("");
+//				System.out.println(("" + printerId).repeat(portionLength));
+				nextPrinter.interrupt();
+				portionNumber++;
 			}
 		}
-
 	}
+	
 
 }
