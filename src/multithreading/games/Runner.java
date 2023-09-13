@@ -25,7 +25,7 @@ public class Runner extends Thread {
             }
         }
         long endTime = System.currentTimeMillis();
-        long totalTime = endTime - startTime;
+        final long totalTime = endTime - startTime;
         race.getResults().add(new RaceResult(0, runnerId, totalTime));
     }
 }
