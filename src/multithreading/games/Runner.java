@@ -1,59 +1,41 @@
 package multithreading.games;
 
-import java.util.concurrent.CountDownLatch;
+import java.time.Instant;
 
 public class Runner extends Thread {
-    private Race race;
-    private int runnerId;
-
-    public Runner(Race race, int runnerId) {
-        this.race = race;
-        this.runnerId = runnerId;
-    }
-
-    @Override
-    public void run() {
-        int sleepRange = race.getMaxSleep() - race.getMinSleep() + 1;
-        int minSleep = race.getMinSleep();
-        int distance = race.getDistance();
-        long startTime = System.currentTimeMillis();
-        for (int i = 0; i < distance; i++) {
-            try {
-                sleep((long) (minSleep + Math.random() * sleepRange));
-            } catch (InterruptedException e) {
-                throw new IllegalStateException();
-            }
-        }
-        long endTime = System.currentTimeMillis();
-        final long totalTime = endTime - startTime;
-        race.getResults().add(new RaceResult(0, runnerId, totalTime));
-    }
+private Race race;
+private int runnerId;
+private Instant finishTime;
+public Runner(Race race, int runnerId) {
+	this.race = race;
+	this.runnerId = runnerId;
 }
+public int getRunnerId() {
+	return runnerId;
+}
+@Override
+public void run() {
+	int sleepRange = race.getMaxSleep() - race.getMinSleep() + 1;
+	int minSleep = race.getMinSleep();
+	int distance = race.getDistance();
+	for (int i = 0; i < distance; i++) {
+		try {
+			sleep((long) (minSleep + Math.random() * sleepRange));
+		} catch (InterruptedException e) {
+			throw new IllegalStateException();
+		}
+		System.out.println(runnerId);
+	}
+	synchronized(race) {
+		finishTime = Instant.now();
+		finishRace();
+	}
+}
+private void finishRace() {
+	race.getResultsTable().add(this);
 
-
-//package multithreading.games;
-//
-//public class Runner extends Thread {
-//private Race race;
-//private int runnerId;
-//public Runner(Race race, int runnerId) {
-//	this.race = race;
-//	this.runnerId = runnerId;
-//}
-//@Override
-//public void run() {
-//	int sleepRange = race.getMaxSleep() - race.getMinSleep() + 1;
-//	int minSleep = race.getMinSleep();
-//	int distance = race.getDistance();
-//	for (int i = 0; i < distance; i++) {
-//		try {
-//			sleep((long) (minSleep + Math.random() * sleepRange));
-//		} catch (InterruptedException e) {
-//			throw new IllegalStateException();
-//		}
-//		System.out.println(runnerId);
-//	}
-//	race.setWinner(runnerId);
-//}
-//}
-//
+}
+public Instant getFinsishTime() {
+	return finishTime;
+}
+}
