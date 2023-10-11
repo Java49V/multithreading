@@ -1,6 +1,8 @@
 package producer;
 
+import consumer.Receiver;
 import messaging.MessageBox;
+import producer.Sender;
 
 public class Sender extends Thread {
 	private MessageBox messageBox;
@@ -27,3 +29,5 @@ public class Sender extends Thread {
 	}
 	
 }
+
+
