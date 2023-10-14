@@ -5,136 +5,126 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class MyLinkedBlockingQueue<E> implements MyBlockingQueue<E> {
-	private final List<E> queue;
-	private final int limit;
+    private final List<E> queue;
+    private final int limit;
 
-	public MyLinkedBlockingQueue(int limit) {
-		this.queue = new LinkedList<>();
-		this.limit = limit;
-	}
+    public MyLinkedBlockingQueue(int limit) {
+        this.queue = new LinkedList<>();
+        this.limit = limit;
+    }
 
-	@Override
-	public boolean add(E e) {
-		synchronized (queue) {
-			if (queue.size() < limit) {
-				queue.add(e);
-				queue.notify();
-				return true;
-			}
-			return false;
-		}
-	}
+    @Override
+    public synchronized boolean add(E e) {
+        if (queue.size() >= limit) {
+            throw new IllegalStateException("Queue is full");
+        }
+        queue.add(e);
+        notifyAll();
+        return true;
+    }
 
-	@Override
-	public boolean offer(E e) {
-		synchronized (queue) {
-			if (queue.size() < limit) {
-				queue.add(e);
-				queue.notify();
-				return true;
-			}
-			return false;
-		}
-	}
+    @Override
+    public synchronized boolean offer(E e) {
+        if (queue.size() < limit) {
+            queue.add(e);
+            notifyAll();
+            return true;
+        }
+        return false;
+    }
 
-	@Override
-	public void put(E e) throws InterruptedException {
-		synchronized (queue) {
-			while (queue.size() >= limit) {
-				queue.wait();
-			}
-			queue.add(e);
-			queue.notify();
-		}
-	}
+    @Override
+    public synchronized void put(E e) throws InterruptedException {
+        while (queue.size() >= limit) {
+            wait();
+        }
+        queue.add(e);
+        notifyAll();
+    }
 
-	@Override
-	public boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException {
-		long timeoutInMillis = unit.toMillis(timeout);
-		synchronized (queue) {
-			long endTime = System.currentTimeMillis() + timeoutInMillis;
-			while (queue.size() >= limit) {
-				if (timeoutInMillis <= 0) {
-					return false;
-				}
-				queue.wait(timeoutInMillis);
-				timeoutInMillis = endTime - System.currentTimeMillis();
-			}
-			queue.add(e);
-			queue.notify();
-			return true;
-		}
-	}
+    @Override
+    public synchronized boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException {
+        long timeoutMillis = unit.toMillis(timeout);
+        long endTime = System.currentTimeMillis() + timeoutMillis;
 
-	@Override
-	public E take() throws InterruptedException {
-		synchronized (queue) {
-			while (queue.isEmpty()) {
-				queue.wait();
-			}
-			E item = queue.remove(0);
-			queue.notify();
-			return item;
-		}
-	}
+        while (queue.size() >= limit) {
+            if (timeoutMillis <= 0) {
+                return false;
+            }
+            wait(timeoutMillis);
+            timeoutMillis = endTime - System.currentTimeMillis();
+        }
 
-	@Override
-	public E poll(long timeout, TimeUnit unit) throws InterruptedException {
-		long timeoutInMillis = unit.toMillis(timeout);
-		synchronized (queue) {
-			long endTime = System.currentTimeMillis() + timeoutInMillis;
-			while (queue.isEmpty()) {
-				if (timeoutInMillis <= 0) {
-					return null;
-				}
-				queue.wait(timeoutInMillis);
-				timeoutInMillis = endTime - System.currentTimeMillis();
-			}
-			E item = queue.remove(0);
-			queue.notify();
-			return item;
-		}
-	}
+        if (queue.size() < limit) {
+            queue.add(e);
+            notifyAll();
+            return true;
+        }
+        return false;
+    }
 
-	@Override
-	public E poll() {
-		synchronized (queue) {
-			if (!queue.isEmpty()) {
-				E item = queue.remove(0);
-				queue.notify();
-				return item;
-			}
-			return null;
-		}
-	}
+    @Override
+    public synchronized E take() throws InterruptedException {
+        while (queue.isEmpty()) {
+            wait();
+        }
+        E item = queue.remove(0);
+        notifyAll();
+        return item;
+    }
 
-	@Override
-	public E remove() {
-		synchronized (queue) {
-			if (!queue.isEmpty()) {
-				return queue.remove(0);
-			}
-			throw new IllegalStateException("Queue is empty");
-		}
-	}
+    @Override
+    public synchronized E poll(long timeout, TimeUnit unit) throws InterruptedException {
+        long timeoutMillis = unit.toMillis(timeout);
+        long endTime = System.currentTimeMillis() + timeoutMillis;
 
-	@Override
-	public E peek() {
-		synchronized (queue) {
-			if (!queue.isEmpty()) {
-				return queue.get(0);
-			}
-			return null;
-		}
-	}
+        while (queue.isEmpty()) {
+            if (timeoutMillis <= 0) {
+                return null;
+            }
+            wait(timeoutMillis);
+            timeoutMillis = endTime - System.currentTimeMillis();
+        }
 
-	@Override
-	public E element() {
-		synchronized (queue) {
-			if (!queue.isEmpty()) {
-				return queue.get(0);
-			}
-			throw new IllegalStateException("Queue is empty");
-		}
-	}
+        if (!queue.isEmpty()) {
+            E item = queue.remove(0);
+            notifyAll();
+            return item;
+        }
+        return null;
+    }
+
+    @Override
+    public synchronized E poll() {
+        if (!queue.isEmpty()) {
+            E item = queue.remove(0);
+            notifyAll();
+            return item;
+        }
+        return null;
+    }
+
+    @Override
+    public synchronized E remove() {
+        if (!queue.isEmpty()) {
+            return queue.remove(0);
+        }
+        throw new IllegalStateException("Queue is empty");
+    }
+
+    @Override
+    public synchronized E peek() {
+        if (!queue.isEmpty()) {
+            return queue.get(0);
+        }
+        return null;
+    }
+
+    @Override
+    public synchronized E element() {
+        if (!queue.isEmpty()) {
+            return queue.get(0);
+        }
+        throw new IllegalStateException("Queue is empty");
+    }
 }
